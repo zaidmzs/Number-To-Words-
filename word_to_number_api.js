@@ -18,19 +18,17 @@ const tens = {
     60: 'sixty', 70: 'seventy', 80: 'eighty', 90: 'ninety'
 };
 
-function convertNumberToWords(number) {
+function convertNumberToWords(number) { //9083
     if (number === 0) return 'zero';
-
     let words = '';
-
     if (number >= 1000000) {
         words += convertNumberToWords(Math.floor(number / 1000000)) + ' million ';
         number %= 1000000;
     }
 
     if (number >= 1000) {
-        words += convertNumberToWords(Math.floor(number / 1000)) + ' thousand ';
-        number %= 1000;
+        words += convertNumberToWords(Math.floor(number / 1000)) + ' thousand '; //nine thousand
+        number %= 1000;  //83
     }
 
     if (number >= 100) {
@@ -39,22 +37,22 @@ function convertNumberToWords(number) {
     }
 
     if (number >= 20) {
-        words += tens[Math.floor(number / 10) * 10] + ' ';
-        number %= 10;
-    } else if (number >= 10) {
+        words += tens[Math.floor(number / 10) * 10] + ' ';    //nine thousand eighty
+        number %= 10;    //3
+    }
+    else if (number >= 10) {
         words += teens[number] + ' ';
         number = 0;
     }
 
     if (number > 0) {
-        words += ones[number];
+        words += ones[number];   //nine
     }
-
     return words.trim();
+
 }
 
 function wordsToNumber(words) {
-    const wordArray = words.toLowerCase().replace(' and', '').replace(/-/g, ' ').split(' ');
     const wordToNumber = {
         zero: 0, one: 1, two: 2, three: 3, four: 4,
         five: 5, six: 6, seven: 7, eight: 8, nine: 9,
@@ -66,37 +64,38 @@ function wordsToNumber(words) {
         point: '.'
     };
 
-    let number = 0;
-    let currentNumber = 0;
-    let hasDecimal = false;
-    let decimalPlace = 1;
+    const wordsArray = words.toLowerCase().split(' ');
 
-    for (let i = 0; i < wordArray.length; i++) {
-        const word = wordArray[i];
-        if (word in wordToNumber) {
-            if (word === 'hundred' || word === 'thousand' || word === 'million') {
-                currentNumber *= wordToNumber[word];
-                number += currentNumber;
-                currentNumber = 0;
-            } else if (word === 'point') {
-                hasDecimal = true;
-            } else {
-                if (hasDecimal) {
-                    if (word === 'and') continue;
-                    currentNumber += wordToNumber[word];
-                    decimalPlace *= 0.1;
-                } else {
-                    currentNumber += wordToNumber[word];
+    let number = 0;
+    let current = 0;
+
+    for (let word of wordsArray) {
+        const value = wordToNumber[word];
+        if (value !== undefined) {
+            if (value >= 100) {
+                if (current === 0) {
+                    current = 1;
                 }
+                current *= value;
+            } else {
+                current += value;
             }
         } else {
             return { error: 'Invalid word: ' + word };
         }
+
+        if (value >= 1000) {
+            number += current;
+            current = 0;
+        }
     }
 
-    number += currentNumber * decimalPlace;
-    return { number: number };
+    number += current;
+
+    return { number };
 }
+
+
 
 
 app.post('/to/number', (req, res) => {
@@ -127,7 +126,7 @@ app.post('/to/words', (req, res) => {
     return res.json({ words: words });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
